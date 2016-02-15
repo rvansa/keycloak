@@ -222,7 +222,13 @@ public class TokenEndpoint {
 
         accessCode.setAction(null);
         UserSessionModel userSession = clientSession.getUserSession();
-        event.user(userSession.getUser());
+        UserModel user = userSession.getUser();
+        if (user == null) {
+            event.error(Errors.USER_NOT_FOUND);
+            throw new ErrorResponseException("invalid_grant", "User not found", Response.Status.BAD_REQUEST);
+        }
+
+        event.user(user);
         event.session(userSession.getId());
 
         String redirectUri = clientSession.getNote(OIDCLoginProtocol.REDIRECT_URI_PARAM);
@@ -239,12 +245,6 @@ public class TokenEndpoint {
         if (!client.isStandardFlowEnabled()) {
             event.error(Errors.NOT_ALLOWED);
             throw new ErrorResponseException("invalid_grant", "Client not allowed to exchange code", Response.Status.BAD_REQUEST);
-        }
-
-        UserModel user = session.users().getUserById(userSession.getUser().getId(), realm);
-        if (user == null) {
-            event.error(Errors.USER_NOT_FOUND);
-            throw new ErrorResponseException("invalid_grant", "User not found", Response.Status.BAD_REQUEST);
         }
 
         if (!user.isEnabled()) {
