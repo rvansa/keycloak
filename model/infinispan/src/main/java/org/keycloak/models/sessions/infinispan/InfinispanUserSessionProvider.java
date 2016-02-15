@@ -489,6 +489,10 @@ public class InfinispanUserSessionProvider implements UserSessionProvider {
     }
 
     protected void removeUserSession(RealmModel realm, UserSessionEntity sessionEntity, boolean offline) {
+        if (sessionEntity == null) {
+            return;
+        }
+
         Cache<String, SessionEntity> cache = getCache(offline);
 
         tx.remove(cache, sessionEntity.getId());
