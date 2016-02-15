@@ -479,7 +479,7 @@ public class InfinispanUserSessionProvider implements UserSessionProvider {
         tx.remove(cache, userSessionId);
 
         UserSessionEntity sessionEntity = (UserSessionEntity) cache.get(userSessionId);
-        if (sessionEntity.getClientSessions() != null) {
+        if (sessionEntity != null && sessionEntity.getClientSessions() != null) {
             for (String clientSessionId : sessionEntity.getClientSessions()) {
                 tx.remove(cache, clientSessionId);
             }
