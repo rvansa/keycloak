@@ -49,7 +49,7 @@ public class Base64Url {
                         "Illegal base64url string!");
         }
         try {
-            return Base64.decode(s);
+            return Base64.decode(s, Base64.DONT_GUNZIP);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
