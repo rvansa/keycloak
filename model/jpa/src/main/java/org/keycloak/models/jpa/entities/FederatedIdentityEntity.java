@@ -17,16 +17,8 @@
 
 package org.keycloak.models.jpa.entities;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
+import javax.persistence.*;
+
 import java.io.Serializable;
 
 /**
@@ -41,7 +33,9 @@ import java.io.Serializable;
         @NamedQuery(name= "deleteFederatedIdentityByRealmAndLink", query="delete from FederatedIdentityEntity social where social.user IN (select u from UserEntity u where realmId=:realmId and u.federationLink=:link)"),
         @NamedQuery(name= "deleteFederatedIdentityByUser", query="delete from FederatedIdentityEntity social where social.user = :user")
 })
-@Table(name="FEDERATED_IDENTITY")
+@Table(name="FEDERATED_IDENTITY",
+    indexes = @Index(columnList = "USER_ID")
+)
 @Entity
 @IdClass(FederatedIdentityEntity.Key.class)
 public class FederatedIdentityEntity {

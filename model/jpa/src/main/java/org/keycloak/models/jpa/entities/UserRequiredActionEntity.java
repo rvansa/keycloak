@@ -17,16 +17,8 @@
 
 package org.keycloak.models.jpa.entities;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
+import javax.persistence.*;
+
 import java.io.Serializable;
 
 /**
@@ -38,7 +30,9 @@ import java.io.Serializable;
         @NamedQuery(name="deleteUserRequiredActionsByRealmAndLink", query="delete from UserRequiredActionEntity action where action.user IN (select u from UserEntity u where u.realmId=:realmId and u.federationLink=:link)")
 })
 @Entity
-@Table(name="USER_REQUIRED_ACTION")
+@Table(name="USER_REQUIRED_ACTION",
+      indexes = @Index(columnList = "USER_ID")
+)
 @IdClass(UserRequiredActionEntity.Key.class)
 public class UserRequiredActionEntity {
 

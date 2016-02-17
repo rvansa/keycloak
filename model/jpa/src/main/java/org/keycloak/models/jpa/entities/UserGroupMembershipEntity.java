@@ -17,16 +17,8 @@
 
 package org.keycloak.models.jpa.entities;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
+import javax.persistence.*;
+
 import java.io.Serializable;
 
 /**
@@ -44,7 +36,9 @@ import java.io.Serializable;
         @NamedQuery(name="deleteUserGroupMembershipsByUser", query="delete from UserGroupMembershipEntity m where m.user = :user")
 
 })
-@Table(name="USER_GROUP_MEMBERSHIP")
+@Table(name="USER_GROUP_MEMBERSHIP",
+      indexes = @Index(columnList = "USER_ID")
+)
 @Entity
 @IdClass(UserGroupMembershipEntity.Key.class)
 public class UserGroupMembershipEntity {

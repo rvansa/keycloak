@@ -17,16 +17,8 @@
 
 package org.keycloak.models.jpa.entities;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
+import javax.persistence.*;
+
 import java.io.Serializable;
 
 /**
@@ -44,7 +36,9 @@ import java.io.Serializable;
         @NamedQuery(name="grantRoleToAllUsers", query="insert into UserRoleMappingEntity (roleId, user) select role.id, user from RoleEntity role, UserEntity user where role.id = :roleId AND role.realm.id = :realmId AND user.realmId = :realmId")
 
 })
-@Table(name="USER_ROLE_MAPPING")
+@Table(name="USER_ROLE_MAPPING",
+      indexes = @Index(columnList = "USER_ID")
+)
 @Entity
 @IdClass(UserRoleMappingEntity.Key.class)
 public class UserRoleMappingEntity  {
