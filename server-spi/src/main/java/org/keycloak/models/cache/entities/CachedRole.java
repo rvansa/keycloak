@@ -80,4 +80,18 @@ public class CachedRole implements Serializable {
     public Set<String> getComposites() {
         return composites;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("CachedRole{");
+        sb.append("id='").append(id).append('\'');
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", realm='").append(realm).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", scopeParamRequired=").append(scopeParamRequired);
+        sb.append(", composite=").append(composite);
+        sb.append(", composites=").append(composites);
+        sb.append('}');
+        return sb.toString();
+    }
 }

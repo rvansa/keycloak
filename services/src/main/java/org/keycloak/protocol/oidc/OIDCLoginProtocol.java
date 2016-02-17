@@ -144,6 +144,7 @@ public class OIDCLoginProtocol implements LoginProtocol {
 
         // Standard or hybrid flow
         if (responseType.hasResponseType(OIDCResponseType.CODE)) {
+            logger.infof("%s set action CODE_TO_TOKEN %s", accessCode.getClientSession().getUserSession().getLoginUsername(), accessCode.getCode());
             accessCode.setAction(ClientSessionModel.Action.CODE_TO_TOKEN.name());
             redirectUri.addParam(OAuth2Constants.CODE, accessCode.getCode());
         }

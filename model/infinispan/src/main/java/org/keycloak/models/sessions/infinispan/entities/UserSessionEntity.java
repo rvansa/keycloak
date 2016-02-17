@@ -145,4 +145,23 @@ public class UserSessionEntity extends SessionEntity {
     public void setBrokerUserId(String brokerUserId) {
         this.brokerUserId = brokerUserId;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("UserSessionEntity{");
+        sb.append("user='").append(user).append('\'');
+        sb.append(", brokerSessionId='").append(brokerSessionId).append('\'');
+        sb.append(", brokerUserId='").append(brokerUserId).append('\'');
+        sb.append(", loginUsername='").append(loginUsername).append('\'');
+        sb.append(", ipAddress='").append(ipAddress).append('\'');
+        sb.append(", authMethod='").append(authMethod).append('\'');
+        sb.append(", rememberMe=").append(rememberMe);
+        sb.append(", started=").append(started);
+        sb.append(", lastSessionRefresh=").append(lastSessionRefresh);
+        sb.append(", clientSessions=").append(clientSessions);
+        sb.append(", state=").append(state);
+        sb.append(", notes=").append(notes);
+        sb.append('}');
+        return sb.toString();
+    }
 }

@@ -62,4 +62,14 @@ public class ClientInitialAccessEntity extends SessionEntity {
         this.remainingCount = remainingCount;
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("ClientInitialAccessEntity{");
+        sb.append("timestamp=").append(timestamp);
+        sb.append(", expires=").append(expires);
+        sb.append(", count=").append(count);
+        sb.append(", remainingCount=").append(remainingCount);
+        sb.append('}');
+        return sb.toString();
+    }
 }

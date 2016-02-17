@@ -128,6 +128,7 @@ public class InfinispanUserSessionProvider implements UserSessionProvider {
 
         // Chance created in this transaction
         if (entity == null) {
+            log.infof("Loading entity from transaction");
             entity = (ClientSessionEntity) tx.get(sessionCache, id);
         }
 

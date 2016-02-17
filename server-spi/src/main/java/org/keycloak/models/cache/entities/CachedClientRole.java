@@ -37,4 +37,12 @@ public class CachedClientRole extends CachedRole {
     public String getIdClient() {
         return idClient;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("CachedClientRole{");
+        sb.append("idClient='").append(idClient).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

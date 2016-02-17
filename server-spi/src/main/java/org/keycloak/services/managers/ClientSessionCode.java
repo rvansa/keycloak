@@ -17,6 +17,7 @@
 
 package org.keycloak.services.managers;
 
+import org.jboss.logging.Logger;
 import org.keycloak.models.ClientModel;
 import org.keycloak.models.ClientSessionModel;
 import org.keycloak.models.ClientTemplateModel;
@@ -38,6 +39,7 @@ import java.util.UUID;
  * @version $Revision: 1 $
  */
 public class ClientSessionCode {
+    private static final Logger logger = Logger.getLogger(ClientSessionCode.class);
 
     private static final byte[] HASH_SEPERATOR = "//".getBytes();
 
@@ -62,16 +64,19 @@ public class ClientSessionCode {
 
             ClientSessionModel clientSession = session.sessions().getClientSession(id);
             if (clientSession == null) {
+                logger.warnf("No session for id ", id);
                 return null;
             }
 
             String hash = createHash(clientSession.getRealm(), clientSession);
             if (!hash.equals(parts[0])) {
+                logger.warnf("Hash does not match %s %s", hash, parts[0]);
                 return null;
             }
 
             return new ClientSessionCode(clientSession.getRealm(), clientSession);
         } catch (RuntimeException e) {
+            logger.error("Unexpected", e);
             return null;
         }
     }
@@ -138,16 +143,19 @@ public class ClientSessionCode {
 
             ClientSessionModel clientSession = session.sessions().getClientSession(realm, id);
             if (clientSession == null) {
+                logger.warnf("Session %s not found", id);
                 return null;
             }
 
             String hash = createHash(realm, clientSession);
             if (!hash.equals(parts[0])) {
+                logger.warnf("Hash does not match %s %s", hash, parts[0]);
                 return null;
             }
 
             return new ClientSessionCode(realm, clientSession);
         } catch (RuntimeException e) {
+            logger.error("Exception", e);
             return null;
         }
     }
@@ -178,16 +186,22 @@ public class ClientSessionCode {
             default:
                 throw new IllegalArgumentException();
         }
-
-        return timestamp + lifespan > Time.currentTime();
+        if (timestamp + lifespan > Time.currentTime()) {
+            return true;
+        } else {
+            logger.warnf("%s: Timestamp %d lifespan %d now %d", actionType, timestamp, lifespan, Time.currentTime());
+            return false;
+        }
     }
 
     public boolean isValidAction(String requestedAction) {
         String action = clientSession.getAction();
         if (action == null) {
+            logger.warnf("Action is null (from %s), requested %s", clientSession.getClass().getSimpleName(), requestedAction);
             return false;
         }
         if (!action.equals(requestedAction)) {
+            logger.warnf("Action %s does not match %s", action, requestedAction);
             return false;
         }
         return true;

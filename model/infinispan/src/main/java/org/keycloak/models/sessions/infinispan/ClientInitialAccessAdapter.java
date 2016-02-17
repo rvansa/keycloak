@@ -83,4 +83,11 @@ public class ClientInitialAccessAdapter implements ClientInitialAccessModel {
         provider.getTx().replace(cache, entity.getId(), entity);
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("ClientInitialAccessAdapter{");
+        sb.append("entity=").append(entity);
+        sb.append('}');
+        return sb.toString();
+    }
 }

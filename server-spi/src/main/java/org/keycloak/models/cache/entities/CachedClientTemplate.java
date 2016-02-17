@@ -144,4 +144,28 @@ public class CachedClientTemplate implements Serializable {
     public Map<String, String> getAttributes() {
         return attributes;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("CachedClientTemplate{");
+        sb.append("id='").append(id).append('\'');
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", realm='").append(realm).append('\'');
+        sb.append(", protocol='").append(protocol).append('\'');
+        sb.append(", fullScopeAllowed=").append(fullScopeAllowed);
+        sb.append(", publicClient=").append(publicClient);
+        sb.append(", frontchannelLogout=").append(frontchannelLogout);
+        sb.append(", bearerOnly=").append(bearerOnly);
+        sb.append(", consentRequired=").append(consentRequired);
+        sb.append(", standardFlowEnabled=").append(standardFlowEnabled);
+        sb.append(", implicitFlowEnabled=").append(implicitFlowEnabled);
+        sb.append(", directAccessGrantsEnabled=").append(directAccessGrantsEnabled);
+        sb.append(", serviceAccountsEnabled=").append(serviceAccountsEnabled);
+        sb.append(", scope=").append(scope);
+        sb.append(", protocolMappers=").append(protocolMappers);
+        sb.append(", attributes=").append(attributes);
+        sb.append('}');
+        return sb.toString();
+    }
 }

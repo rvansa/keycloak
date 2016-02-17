@@ -98,4 +98,12 @@ public class UsernameLoginFailureAdapter implements UsernameLoginFailureModel {
         provider.getTx().replace(cache, key, entity);
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("UsernameLoginFailureAdapter{");
+        sb.append("key=").append(key);
+        sb.append(", entity=").append(entity);
+        sb.append('}');
+        return sb.toString();
+    }
 }

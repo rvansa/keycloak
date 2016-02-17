@@ -289,4 +289,11 @@ public class ClientSessionAdapter implements ClientSessionModel {
 
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("ClientSessionAdapter{");
+        sb.append("entity=").append(entity);
+        sb.append('}');
+        return sb.toString();
+    }
 }

@@ -84,4 +84,18 @@ public class CachedGroup implements Serializable {
     public Set<String> getSubGroups() {
         return subGroups;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("CachedGroup{");
+        sb.append("id='").append(id).append('\'');
+        sb.append(", realm='").append(realm).append('\'');
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", parentId='").append(parentId).append('\'');
+        sb.append(", attributes=").append(attributes);
+        sb.append(", roleMappings=").append(roleMappings);
+        sb.append(", subGroups=").append(subGroups);
+        sb.append('}');
+        return sb.toString();
+    }
 }

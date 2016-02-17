@@ -278,4 +278,48 @@ public class CachedClient implements Serializable {
     public boolean isUseTemplateMappers() {
         return useTemplateMappers;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("CachedClient{");
+        sb.append("id='").append(id).append('\'');
+        sb.append(", clientId='").append(clientId).append('\'');
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append(", realm='").append(realm).append('\'');
+        sb.append(", redirectUris=").append(redirectUris);
+        sb.append(", enabled=").append(enabled);
+        sb.append(", clientAuthenticatorType='").append(clientAuthenticatorType).append('\'');
+        sb.append(", secret='").append(secret).append('\'');
+        sb.append(", registrationToken='").append(registrationToken).append('\'');
+        sb.append(", protocol='").append(protocol).append('\'');
+        sb.append(", attributes=").append(attributes);
+        sb.append(", publicClient=").append(publicClient);
+        sb.append(", fullScopeAllowed=").append(fullScopeAllowed);
+        sb.append(", frontchannelLogout=").append(frontchannelLogout);
+        sb.append(", notBefore=").append(notBefore);
+        sb.append(", scope=").append(scope);
+        sb.append(", webOrigins=").append(webOrigins);
+        sb.append(", protocolMappers=").append(protocolMappers);
+        sb.append(", surrogateAuthRequired=").append(surrogateAuthRequired);
+        sb.append(", managementUrl='").append(managementUrl).append('\'');
+        sb.append(", rootUrl='").append(rootUrl).append('\'');
+        sb.append(", baseUrl='").append(baseUrl).append('\'');
+        sb.append(", defaultRoles=").append(defaultRoles);
+        sb.append(", bearerOnly=").append(bearerOnly);
+        sb.append(", consentRequired=").append(consentRequired);
+        sb.append(", standardFlowEnabled=").append(standardFlowEnabled);
+        sb.append(", implicitFlowEnabled=").append(implicitFlowEnabled);
+        sb.append(", directAccessGrantsEnabled=").append(directAccessGrantsEnabled);
+        sb.append(", serviceAccountsEnabled=").append(serviceAccountsEnabled);
+        sb.append(", roles=").append(roles);
+        sb.append(", nodeReRegistrationTimeout=").append(nodeReRegistrationTimeout);
+        sb.append(", registeredNodes=").append(registeredNodes);
+        sb.append(", clientTemplate='").append(clientTemplate).append('\'');
+        sb.append(", useTemplateScope=").append(useTemplateScope);
+        sb.append(", useTemplateConfig=").append(useTemplateConfig);
+        sb.append(", useTemplateMappers=").append(useTemplateMappers);
+        sb.append('}');
+        return sb.toString();
+    }
 }

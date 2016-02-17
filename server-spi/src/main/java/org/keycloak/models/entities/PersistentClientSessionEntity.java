@@ -58,4 +58,15 @@ public class PersistentClientSessionEntity {
     public void setData(String data) {
         this.data = data;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("PersistentClientSessionEntity{");
+        sb.append("clientSessionId='").append(clientSessionId).append('\'');
+        sb.append(", clientId='").append(clientId).append('\'');
+        sb.append(", timestamp=").append(timestamp);
+        sb.append(", data='").append(data).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

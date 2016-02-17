@@ -52,4 +52,12 @@ public class LoginFailureKey implements Serializable {
         return result;
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("LoginFailureKey{");
+        sb.append("realm='").append(realm).append('\'');
+        sb.append(", username='").append(username).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

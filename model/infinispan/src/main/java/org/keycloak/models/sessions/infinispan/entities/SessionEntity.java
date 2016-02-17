@@ -60,4 +60,13 @@ public class SessionEntity implements Serializable {
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("SessionEntity{");
+        sb.append("id='").append(id).append('\'');
+        sb.append(", realm='").append(realm).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

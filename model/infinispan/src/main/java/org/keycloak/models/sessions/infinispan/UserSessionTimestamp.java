@@ -38,4 +38,13 @@ public class UserSessionTimestamp implements Serializable {
     public int getClientSessionTimestamp() {
         return clientSessionTimestamp;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("UserSessionTimestamp{");
+        sb.append("userSessionId='").append(userSessionId).append('\'');
+        sb.append(", clientSessionTimestamp=").append(clientSessionTimestamp);
+        sb.append('}');
+        return sb.toString();
+    }
 }

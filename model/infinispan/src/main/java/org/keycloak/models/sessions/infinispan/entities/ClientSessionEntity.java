@@ -149,4 +149,24 @@ public class ClientSessionEntity extends SessionEntity {
     public Set<String> getRequiredActions() {
         return requiredActions;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("ClientSessionEntity{");
+        sb.append("client='").append(client).append('\'');
+        sb.append(", userSession='").append(userSession).append('\'');
+        sb.append(", authMethod='").append(authMethod).append('\'');
+        sb.append(", redirectUri='").append(redirectUri).append('\'');
+        sb.append(", timestamp=").append(timestamp);
+        sb.append(", action='").append(action).append('\'');
+        sb.append(", roles=").append(roles);
+        sb.append(", protocolMappers=").append(protocolMappers);
+        sb.append(", notes=").append(notes);
+        sb.append(", userSessionNotes=").append(userSessionNotes);
+        sb.append(", authenticatorStatus=").append(authenticatorStatus);
+        sb.append(", authUserId='").append(authUserId).append('\'');
+        sb.append(", requiredActions=").append(requiredActions);
+        sb.append('}');
+        return sb.toString();
+    }
 }

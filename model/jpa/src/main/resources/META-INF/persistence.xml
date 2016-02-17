@@ -63,6 +63,7 @@
 
         <properties>
             <property name="jboss.as.jpa.managed" value="false"/>
+	    <property name="hibernate.hbm2ddl.auto" value="update"/>
         </properties>
     </persistence-unit>
 </persistence>

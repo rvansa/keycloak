@@ -85,4 +85,17 @@ public class LoginFailureEntity implements Serializable {
         this.lastFailure = 0;
         this.lastIPFailure = null;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("LoginFailureEntity{");
+        sb.append("username='").append(username).append('\'');
+        sb.append(", realm='").append(realm).append('\'');
+        sb.append(", failedLoginNotBefore=").append(failedLoginNotBefore);
+        sb.append(", numFailures=").append(numFailures);
+        sb.append(", lastFailure=").append(lastFailure);
+        sb.append(", lastIPFailure='").append(lastIPFailure).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

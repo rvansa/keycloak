@@ -147,4 +147,28 @@ public class CachedUser implements Serializable {
     public Set<String> getGroups() {
         return groups;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("CachedUser{");
+        sb.append("id='").append(id).append('\'');
+        sb.append(", realm='").append(realm).append('\'');
+        sb.append(", username='").append(username).append('\'');
+        sb.append(", createdTimestamp=").append(createdTimestamp);
+        sb.append(", firstName='").append(firstName).append('\'');
+        sb.append(", lastName='").append(lastName).append('\'');
+        sb.append(", email='").append(email).append('\'');
+        sb.append(", emailVerified=").append(emailVerified);
+        sb.append(", credentials=").append(credentials);
+        sb.append(", enabled=").append(enabled);
+        sb.append(", totp=").append(totp);
+        sb.append(", federationLink='").append(federationLink).append('\'');
+        sb.append(", serviceAccountClientLink='").append(serviceAccountClientLink).append('\'');
+        sb.append(", attributes=").append(attributes);
+        sb.append(", requiredActions=").append(requiredActions);
+        sb.append(", roleMappings=").append(roleMappings);
+        sb.append(", groups=").append(groups);
+        sb.append('}');
+        return sb.toString();
+    }
 }
