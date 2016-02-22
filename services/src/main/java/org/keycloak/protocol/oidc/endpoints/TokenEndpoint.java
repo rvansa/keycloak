@@ -221,7 +221,6 @@ public class TokenEndpoint {
             throw new ErrorResponseException("invalid_grant", "Code is expired", Response.Status.BAD_REQUEST);
         }
 
-        logger.infof("%s set action null (%s)", clientSession.getUserSession().getLoginUsername(), code);
         accessCode.setAction(null);
         UserSessionModel userSession = clientSession.getUserSession();
         UserModel user = userSession.getUser();

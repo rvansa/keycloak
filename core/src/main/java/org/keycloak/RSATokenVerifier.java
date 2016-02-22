@@ -18,6 +18,7 @@
 package org.keycloak;
 
 import org.keycloak.common.VerificationException;
+import org.keycloak.common.util.Time;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
 import org.keycloak.jose.jws.crypto.RSAProvider;
@@ -57,7 +58,7 @@ public class RSATokenVerifier {
             }
         }
         if (checkActive && !token.isActive()) {
-            throw new VerificationException("Token is not active.");
+            throw new VerificationException("Token is not active, expiration=" + token.getExpiration() + ", notBefore=" + token.getNotBefore() + ", now=" + Time.currentTime());
         }
 
         return token;
