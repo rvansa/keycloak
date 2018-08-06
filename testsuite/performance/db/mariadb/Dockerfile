@@ -1,3 +1,5 @@
+# TODO: this is based on ubuntu; we should rather use CentOS/RHEL based images:
+# https://docs.openshift.com/container-platform/3.9/using_images/db_images/mariadb.html
 FROM mariadb:10.3.3
 
 ARG MAX_CONNECTIONS=100

@@ -212,6 +212,32 @@
             </properties>
         </profile>
 
+        <profile>
+            <id>provision-openshift</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <name>${openshift.registry}/${openshift.project}/keycloak</name>
+                                    <build>
+                                        <dockerFileDir>${project.build.directory}/docker</dockerFileDir>
+                                        <tags>${project.version}</tags>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
     
 </project>
