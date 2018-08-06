@@ -9,6 +9,9 @@
 - Docker 1.13+
 - Docker Compose 1.14+
 
+### OpenShift Provisioner
+- Openshift 3.9+
+
 ## Getting started for the impatient
 
 Here's how to perform a simple tests run:
@@ -25,7 +28,7 @@ cd testsuite/performance
 mvn clean install
 
 # Make sure your Docker daemon is running THEN
-mvn verify -Pprovision
+mvn verify -Pprovision-docker
 mvn verify -Pgenerate-data -Ddataset=100u2c -DnumOfWorkers=10 -DhashIterations=100
 mvn verify -Ptest -Ddataset=100u2c -DusersPerSec=2 -DrampUpPeriod=10 -DuserThinkTime=0 -DbadLoginAttempts=1 -DrefreshTokenCount=1 -DmeasurementPeriod=60 -DfilterResults=true
 ```
@@ -34,14 +37,14 @@ Now open the generated report in a browser - the link to .html file is displayed
 
 After the test run you may want to tear down the docker instances for the next run to be able to import data:
 ```
-mvn verify -Pteardown
+mvn verify -Pteardown-docker
 ```
 
 You can perform all phases in a single run:
 ```
-mvn verify -Pprovision,generate-data,test,teardown -Ddataset=100u2c -DnumOfWorkers=10 -DhashIterations=100 -DusersPerSec=4 -DrampUpPeriod=10
+mvn verify -Pprovision-docker,generate-data,test,teardown-docker -Ddataset=100u2c -DnumOfWorkers=10 -DhashIterations=100 -DusersPerSec=4 -DrampUpPeriod=10
 ```
-Note: The order in which maven profiles are listed does not determine the order in which profile related plugins are executed. `teardown` profile always executes last.
+Note: The order in which maven profiles are listed does not determine the order in which profile related plugins are executed. `teardown-docker` profile always executes last.
 
 Keep reading for more information.
 
@@ -52,11 +55,12 @@ Keep reading for more information.
 
 #### Provisioners
 
-Depending on the target environment different provisioners may be used.
-Provisioner can be selected via property `-Dprovisioner=PROVISIONER`. 
+Depending on the target environment different provisioners may be used. The choice of provisioner reflects
+in the Maven profiles (e.g. `provision-*`, `teardown-*`, `monitoring-*`...) suffix.
 
-Default value is `docker-compose` which is intended for testing on a local docker host.
-This is currently the only implemented option. See [`README.docker-compose.md`](README.docker-compose.md) for more details.
+Current options for the suffix are:
+* `docker` which provisions a local docker host using Docker-Compose. [`README.docker-compose.md`](README.docker-compose.md)
+* `openshift` that configures a OpenShift Origin/OpenShift Container Platform instance.
 
 #### Deployment Types
 
@@ -71,25 +75,27 @@ Usage: `mvn verify -P provision[,DEPLOYMENT_PROFILE] [-Dprovisioning.properties=
 The properties are loaded from `tests/parameters/provisioning/${provisioning.properties}.properties` file.
 Individual parameters can be overriden from command line via `-D` params.
 
-Default property set is `docker-compose/4cpus/singlenode`.
+Default property set is `4cpus/singlenode`.
 
 To load a custom properties file specify `-Dprovisioning.properties.file=ABSOLUTE_PATH_TO_FILE` instead of `-Dprovisioning.properties`.
-This file needs to contain all properties required by the specific combination of provisioner and deployment type.
-See examples in folder `tests/parameters/provisioning/docker-compose/4cpus`.
+This file needs to contain all properties required by the deployment type. This file is intended to be shared across providers to avoid
+excessive duplication, therefore some properties may not apply to all provisioners (e.g. Docker-Compose configures cpusets directly
+while Openshift sets the CPU requirement with number of millicores).
+See examples in folder `tests/parameters/provisioning/4cpus`.
 
 Available parameters are described in [`README.provisioning-parameters.md`](README.provisioning-parameters.md).
 
 #### Examples:
-- Provision a single-node deployment with docker-compose: `mvn verify -P provision`
-- Provision a cluster deployment with docker-compose: `mvn verify -P provision,cluster`
-- Provision a cluster deployment with docker-compose, overriding some properties: `mvn verify -P provision,cluster -Dkeycloak.scale=2 -Dlb.worker.task-max-threads=32`
-- Provision a cross-DC deployment with docker-compose: `mvn verify -P provision,crossdc`
-- Provision a cross-DC deployment with docker-compose using a custom properties file: `mvn verify -P provision,crossdc -Dprovisioning.properties.file=/tmp/custom-crossdc.properties`
+- Provision a single-node deployment with docker-compose: `mvn verify -P provision-docker`
+- Provision a cluster deployment with docker-compose: `mvn verify -P provision-docker,cluster`
+- Provision a cluster deployment with docker-compose, overriding some properties: `mvn verify -P provision-docker,cluster -Dkeycloak.scale=2 -Dlb.worker.task-max-threads=32`
+- Provision a cross-DC deployment with docker-compose: `mvn verify -P provision-docker,crossdc`
+- Provision a cross-DC deployment with docker-compose using a custom properties file: `mvn verify -P provision-docker,crossdc -Dprovisioning.properties.file=/tmp/custom-crossdc.properties`
 
 
 #### Provisioned System
 
-The `provision` operation will produce a `provisioned-system.properties` inside the `tests/target` directory 
+The `provision-*` operation will produce a `provisioned-system.properties` inside the `tests/target` directory
 with information about the provisioned system such as the type of deployment and URLs of Keycloak servers and load balancers.
 This information is then used by operations `generate-data`, `import-dump`, `test`, `teardown`.
 
@@ -100,14 +106,21 @@ to tear down the currently running system.
 
 **Note:** When switching deployment type from `singlenode` or `cluster` to `crossdc` (or the other way around) 
 it is necessary to update the generated Keycloak server configuration (inside `keycloak/target` directory) by 
-adding a `clean` goal to the provisioning command like so: `mvn clean verify -Pprovision …`. It is *not* necessary to update this configuration 
+adding a `clean` goal to the provisioning command like so: `mvn clean verify -Pprovision-docker …`. It is *not* necessary to update this configuration
 when switching between `singlenode` and `cluster` deployments.
 
-#### Provisioning on Openshift
+#### Provisioning on OpenShift
 
-TODO: some of the statements above are untrue.
+The provisioner is expected to work against generic OpenShift installations, but some steps below may be specific
+to Minishift as this is the easiest way to develop OpenShift apps locally.
+In order to run the benchmark download & install Minishift and set up desired CPU and memory limits (defaults are 2 CPUs and 2GB of memory).
 
-If you want to run the benchmark in Minishift start it now using `minishift start`.
+```
+minishift config set cpus 4
+minishift config set memory 8GB
+minishift start
+```
+
 Make sure that for provisioning you're using the docker daemon that is running Openshift:
 in case of Minishift you should run `minishift docker-env` and set up the environment variables as suggested.
 You can verify the setup by running `docker ps` - you should see Openshift services there.
@@ -115,9 +128,9 @@ You can verify the setup by running `docker ps` - you should see Openshift servi
 Login (`oc login`) as a regular user. This user does not need cluster-admin priviledges but it must be able
 to create a new project and push images to docker registry - see
 [Openshift documentation/Accessing registry](https://docs.openshift.com/container-platform/3.9/install_config/registry/accessing_registry.html#access)
-for details.
+for details. Provisioning monitoring (TODO) may need elevated privileges, though.
 
-Set environment properties:
+Set these environment properties:
 * `OPENSHIFT_URL` to the API server URL - with Minishift this can be shown using `minishift console --url`.
 * `OPENSHIFT_ADDRESS` to the external address of Openshift where the routes should be exposed to. Use `minishift ip` if on Minishift.
 * `OPENSHIFT_PROJECT` to the name of the openshift project. By default this is `keycloak-test`
@@ -131,21 +144,20 @@ Beware that in order to push to the registry you need to have certificates set u
 in `/etc/docker/daemon.json`. If you use Minishift this configuration may be in the Minishift VM, you should not configure your local docker daemon.
 
 Then you can start provisioning using `mvn verify -Pprovision-openshift`: this builds the images and pushes them
-to the `docker-registry` running in Openshift. It also creates all the Openshift resources.
+to the docker registry running in Openshift. It also creates all the Openshift resources.
 
 Contrary to Docker-Compose provisioning we don't use modcluster-based load balancer - Openshift handles load balancing internally.
 
-
 ### Collect Artifacts
 
-Usage: `mvn verify -Pcollect`
+Usage: `mvn verify -Pcollect-docker` or `mvn verify -Pcollect-openshift`
 
 Collects artifacts such as logs from the provisioned system and stores them in `tests/target/collected-artifacts/${deployment}-TIMESTAMP/`.
 When used in combination with teardown (see below) the artifacts are collected just before the system is torn down.
 
 ### Teardown
 
-Usage: `mvn verify -Pteardown [-Dprovisioner=<PROVISIONER>]`
+Usage: `mvn verify -Pteardown-docker` or `mvn verify -Pteardown-openshift`
 
 **Note:** Unless the provisioned system has been properly torn down the maven build will not allow a cleanup of the `tests/target` directory
 because it contains the `provisioned-system.properties` with information about the still-running system.
@@ -322,11 +334,13 @@ To get the connection URLs for `cluster` or `crossdc` deployments see the JMX se
 There is a docker-based solution for monitoring CPU, memory and network usage per container. 
 It uses CAdvisor service to export container metrics into InfluxDB time series database, and Grafana web app to query the DB and present results as graphs.
 
-- To enable run: `mvn verify -Pmonitoring`
-- To disable run: `mvn verify -Pmonitoring-off[,delete-monitoring-data]`.
+- To enable run: `mvn verify -Pmonitoring-docker`
+- To disable run: `mvn verify -Pmonitoring-docker-off[,delete-monitoring-data]`.
 By default the monitoring history is preserved. If you wish to delete it enable the `delete-monitoring-data` profile when turning monitoring off.
 
 To view monitoring dashboard open Grafana UI at: `http://localhost:3000/dashboard/file/resource-usage-combined.json`.
+
+Monitoring on OpenShift is TODO.
 
 ### Sysstat metrics
 

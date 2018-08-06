@@ -30,10 +30,9 @@
     <name>Keycloak Performance TestSuite - Tests</name>
 
     <properties>
-        <provisioner>docker-compose</provisioner>
         <deployment>singlenode</deployment>
 
-        <provisioning.properties>${provisioner}/4cpus/${deployment}</provisioning.properties>
+        <provisioning.properties>4cpus/${deployment}</provisioning.properties>
         <dataset>2u2c</dataset>
         <test.properties>oidc-login-logout</test.properties>
         
@@ -348,9 +347,9 @@
                 <trustStorePasswordArg>-Djavax.net.ssl.trustStorePassword=${trustStorePassword}</trustStorePasswordArg>
             </properties>
         </profile>
-        
+
         <profile>
-            <id>provision</id>
+            <id>provision-docker</id>
             <properties>
                 <project.basedir>${project.basedir}</project.basedir>
                 <project.build.directory>${project.build.directory}</project.build.directory>
@@ -369,7 +368,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="prepare-provisioning.xml" target="prepare-${provisioner}" />
+                                        <ant antfile="prepare-provisioning.xml" target="prepare-docker-compose" />
                                     </target>
                                 </configuration>
                             </execution>
@@ -386,9 +385,8 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>./${provisioner}.sh</executable>
+                                    <executable>./docker-compose.sh</executable>
                                     <environmentVariables>
-                                        <PROVISIONER>${provisioner}</PROVISIONER>
                                         <DEPLOYMENT>${deployment}</DEPLOYMENT>
                                         <OPERATION>provision</OPERATION>
 
@@ -400,10 +398,10 @@
                                         <KEYCLOAK_SCALE>${keycloak.scale}</KEYCLOAK_SCALE>
                                         <KEYCLOAK_DC1_SCALE>${keycloak.dc1.scale}</KEYCLOAK_DC1_SCALE>
                                         <KEYCLOAK_DC2_SCALE>${keycloak.dc2.scale}</KEYCLOAK_DC2_SCALE>
-                                        <KEYCLOAK_CPUSETS>${keycloak.docker.cpusets}</KEYCLOAK_CPUSETS>
-                                        <KEYCLOAK_DC1_CPUSETS>${keycloak.dc1.docker.cpusets}</KEYCLOAK_DC1_CPUSETS>
-                                        <KEYCLOAK_DC2_CPUSETS>${keycloak.dc2.docker.cpusets}</KEYCLOAK_DC2_CPUSETS>
-                                        <KEYCLOAK_MEMLIMIT>${keycloak.docker.memlimit}</KEYCLOAK_MEMLIMIT>
+                                        <KEYCLOAK_CPUSETS>${keycloak.cpusets}</KEYCLOAK_CPUSETS>
+                                        <KEYCLOAK_DC1_CPUSETS>${keycloak.dc1.cpusets}</KEYCLOAK_DC1_CPUSETS>
+                                        <KEYCLOAK_DC2_CPUSETS>${keycloak.dc2.cpusets}</KEYCLOAK_DC2_CPUSETS>
+                                        <KEYCLOAK_MEMLIMIT>${keycloak.memlimit}</KEYCLOAK_MEMLIMIT>
                                         <KEYCLOAK_JVM_MEMORY>${keycloak.jvm.memory}</KEYCLOAK_JVM_MEMORY>
                                         <KEYCLOAK_HTTP_MAX_CONNECTIONS>${keycloak.http.max-connections}</KEYCLOAK_HTTP_MAX_CONNECTIONS>
                                         <KEYCLOAK_AJP_MAX_CONNECTIONS>${keycloak.ajp.max-connections}</KEYCLOAK_AJP_MAX_CONNECTIONS>
@@ -417,24 +415,24 @@
                                         <KEYCLOAK_ADMIN_USER>${keycloak.admin.user}</KEYCLOAK_ADMIN_USER>
                                         <KEYCLOAK_ADMIN_PASSWORD>${keycloak.admin.password}</KEYCLOAK_ADMIN_PASSWORD>
 
-                                        <DB_CPUSETS>${db.docker.cpusets}</DB_CPUSETS>
-                                        <DB_DC1_CPUSETS>${db.dc1.docker.cpusets}</DB_DC1_CPUSETS>
-                                        <DB_DC2_CPUSETS>${db.dc2.docker.cpusets}</DB_DC2_CPUSETS>
-                                        <DB_MEMLIMIT>${db.docker.memlimit}</DB_MEMLIMIT>
+                                        <DB_CPUSETS>${db.cpusets}</DB_CPUSETS>
+                                        <DB_DC1_CPUSETS>${db.dc1.cpusets}</DB_DC1_CPUSETS>
+                                        <DB_DC2_CPUSETS>${db.dc2.cpusets}</DB_DC2_CPUSETS>
+                                        <DB_MEMLIMIT>${db.memlimit}</DB_MEMLIMIT>
                                         <DB_MAX_CONNECTIONS>${db.max.connections}</DB_MAX_CONNECTIONS>
 
-                                        <LB_CPUSETS>${lb.docker.cpusets}</LB_CPUSETS>
-                                        <LB_DC1_CPUSETS>${lb.dc1.docker.cpusets}</LB_DC1_CPUSETS>
-                                        <LB_DC2_CPUSETS>${lb.dc2.docker.cpusets}</LB_DC2_CPUSETS>
-                                        <LB_MEMLIMIT>${lb.docker.memlimit}</LB_MEMLIMIT>
+                                        <LB_CPUSETS>${lb.cpusets}</LB_CPUSETS>
+                                        <LB_DC1_CPUSETS>${lb.dc1.cpusets}</LB_DC1_CPUSETS>
+                                        <LB_DC2_CPUSETS>${lb.dc2..cpusets}</LB_DC2_CPUSETS>
+                                        <LB_MEMLIMIT>${lb.memlimit}</LB_MEMLIMIT>
                                         <LB_JVM_MEMORY>${lb.jvm.memory}</LB_JVM_MEMORY>
                                         <LB_HTTP_MAX_CONNECTIONS>${lb.http.max-connections}</LB_HTTP_MAX_CONNECTIONS>
                                         <LB_WORKER_IO_THREADS>${lb.worker.io-threads}</LB_WORKER_IO_THREADS>
                                         <LB_WORKER_TASK_MAX_THREADS>${lb.worker.task-max-threads}</LB_WORKER_TASK_MAX_THREADS>
                                         
-                                        <INFINISPAN_DC1_CPUSETS>${infinispan.dc1.docker.cpusets}</INFINISPAN_DC1_CPUSETS>
-                                        <INFINISPAN_DC2_CPUSETS>${infinispan.dc2.docker.cpusets}</INFINISPAN_DC2_CPUSETS>
-                                        <INFINISPAN_MEMLIMIT>${infinispan.docker.memlimit}</INFINISPAN_MEMLIMIT>
+                                        <INFINISPAN_DC1_CPUSETS>${infinispan.dc1.cpusets}</INFINISPAN_DC1_CPUSETS>
+                                        <INFINISPAN_DC2_CPUSETS>${infinispan.dc2.cpusets}</INFINISPAN_DC2_CPUSETS>
+                                        <INFINISPAN_MEMLIMIT>${infinispan.memlimit}</INFINISPAN_MEMLIMIT>
                                         <INFINISPAN_JVM_MEMORY>${infinispan.jvm.memory}</INFINISPAN_JVM_MEMORY>
                                     </environmentVariables>
                                 </configuration>
@@ -638,9 +636,8 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>./${provisioner}.sh</executable>
+                                    <executable>./docker-compose.sh</executable>
                                     <environmentVariables>
-                                        <PROVISIONER>${provisioner}</PROVISIONER>
                                         <DEPLOYMENT>${deployment}</DEPLOYMENT>
                                         <OPERATION>export-dump</OPERATION>
                                         <DATASET_PROPERTIES_FILE>${dataset.properties.file}</DATASET_PROPERTIES_FILE>
@@ -668,9 +665,8 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>./${provisioner}.sh</executable>
+                                    <executable>./docker-compose.sh</executable>
                                     <environmentVariables>
-                                        <PROVISIONER>${provisioner}</PROVISIONER>
                                         <DEPLOYMENT>${deployment}</DEPLOYMENT>
                                         <OPERATION>import-dump</OPERATION>
                                         <DATASET_PROPERTIES_FILE>${dataset.properties.file}</DATASET_PROPERTIES_FILE>
@@ -692,7 +688,7 @@
         </profile>
         
         <profile>
-            <id>collect</id>
+            <id>collect-docker</id>
             <build>
                 <plugins>
                     <plugin>
@@ -706,9 +702,8 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>./${provisioner}.sh</executable>
+                                    <executable>./docker-compose.sh</executable>
                                     <environmentVariables>
-                                        <PROVISIONER>${provisioner}</PROVISIONER>
                                         <DEPLOYMENT>${deployment}</DEPLOYMENT>
                                         <OPERATION>collect</OPERATION>
                                     </environmentVariables>
@@ -719,9 +714,40 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <id>collect-openshift</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>collect-artifacts</id>
+                                <!-- Do provisioning after the docker images are built -->
+                                <phase>post-integration-test</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <mainClass>org.keycloak.performance.openshift.Provisioner</mainClass>
+                            <arguments>
+                                <argument>collect-artifacts</argument>
+                                <argument>${deployment}</argument>
+                                <argument>${project.build.directory}</argument>
+                            </arguments>
+                            <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         
         <profile>
-            <id>teardown</id>
+            <id>teardown-docker</id>
             <properties>
                 <delete.data>true</delete.data>
             </properties>
@@ -738,9 +764,8 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>./${provisioner}.sh</executable>
+                                    <executable>./docker-compose.sh</executable>
                                     <environmentVariables>
-                                        <PROVISIONER>${provisioner}</PROVISIONER>
                                         <DEPLOYMENT>${deployment}</DEPLOYMENT>
                                         <OPERATION>teardown</OPERATION>
                                         <DELETE_DATA>${delete.data}</DELETE_DATA>
@@ -794,7 +819,7 @@
         
 
         <profile>
-            <id>monitoring</id>
+            <id>monitoring-docker</id>
             <build>
                 <plugins>
                     <plugin>
@@ -808,12 +833,11 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>./${provisioner}.sh</executable>
+                                    <executable>./docker-compose.sh</executable>
                                     <environmentVariables>
-                                        <PROVISIONER>${provisioner}</PROVISIONER>
                                         <DEPLOYMENT>monitoring</DEPLOYMENT>
                                         <OPERATION>provision</OPERATION>
-                                        <MONITORING_CPUSETS>${monitoring.docker.cpusets}</MONITORING_CPUSETS>
+                                        <MONITORING_CPUSETS>${monitoring.cpusets}</MONITORING_CPUSETS>
                                     </environmentVariables>
                                 </configuration>
                             </execution>
@@ -823,7 +847,7 @@
             </build>
         </profile>
         <profile>
-            <id>monitoring-off</id>
+            <id>monitoring-docker-off</id>
             <properties>
                 <delete.monitoring.data>false</delete.monitoring.data>
             </properties>
@@ -840,9 +864,8 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>./${provisioner}.sh</executable>
+                                    <executable>./docker-compose.sh</executable>
                                     <environmentVariables>
-                                        <PROVISIONER>${provisioner}</PROVISIONER>
                                         <DEPLOYMENT>monitoring</DEPLOYMENT>
                                         <OPERATION>teardown</OPERATION>
                                         <DELETE_DATA>${delete.monitoring.data}</DELETE_DATA>

@@ -1,5 +1,6 @@
 package org.keycloak.performance.openshift;
 
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.VersionInfo;
@@ -8,10 +9,13 @@ import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -26,49 +30,23 @@ public class Provisioner {
    private static final String OPENSHIFT_ADDRESS = "OPENSHIFT_ADDRESS";
 
    private static final boolean SKIP_NAMESPACE_RESET = true;
-   private static final boolean PROVISION_MONITORING = false;
 
    private static final String PROJECT = envOptional(OPENSHIFT_PROJECT, "keycloak-test");
    private static final String REGISTRY = envOptional(OPENSHIFT_REGISTRY, "172.30.1.1:5000");
    private static final String EXT_ADDRESS = envRequired(OPENSHIFT_ADDRESS);
-
-   private static String inputPropertiesFile;
-   private static String outputPropertiesFile;
-   private static String deployment;
-
-   private static Properties inputProperties = new Properties();
 
    private static final String DEFAULT_KEYCLOAK_JVM_MEMORY = "-Xms64m -Xmx2g -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m";
    private static final String DEFAULT_KEYCLOAK_JAVA_OPTS = " -Djava.net.preferIPv4Stack=true -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.awt.headless=true";
 
    public static void main(String[] args) {
       if (args.length < 1) {
-         throw new ProvisionerError("Too few arguments: use one of: 'create-project', 'define-resources', 'scaledown'");
-      }
-      if (args.length >= 2) {
-         deployment = args[1];
-      }
-      if (args.length >= 3) {
-         inputPropertiesFile = args[2];
-      }
-      if (args.length >= 4) {
-         outputPropertiesFile = args[3];
+         throw new ProvisionerError("Too few arguments: use one of: 'create-project', 'define-resources', 'define-monitoring', 'collect-artifacts', 'scaledown'");
       }
 
       String openshiftUrl = envRequired(OPENSHIFT_URL);
       // TODO this does not work
       String user = envOptional(OPENSHIFT_USER, "developer");
       String password = envOptional(OPENSHIFT_PASSWORD, "");
-
-      if (inputPropertiesFile != null) {
-         try (FileInputStream fis = new FileInputStream(inputPropertiesFile)) {
-            inputProperties.load(fis);
-         } catch (FileNotFoundException e) {
-            throw ProvisionerError.format("Properties file '%s' does not exist.");
-         } catch (IOException e) {
-            throw new ProvisionerError("Cannot load properties", e);
-         }
-      }
 
       System.out.printf("Connecting to OpenShift master on %s as %s%n", openshiftUrl, user);
 
@@ -90,7 +68,13 @@ public class Provisioner {
                   createProject(oc);
                   break;
                case "define-resources":
-                  defineResources(oc);
+                  defineResources(oc, args);
+                  break;
+               case "define-monitoring":
+                  defineMonitoring(oc);
+                  break;
+               case "collect-artifacts":
+                  collectArtifacts(oc, args);
                   break;
                case "scaledown":
                   scaledown(oc);
@@ -104,6 +88,43 @@ public class Provisioner {
       } finally {
          System.out.println("Provisioner closing...");
          oc.close();
+      }
+   }
+
+   private static void collectArtifacts(OpenShiftClient oc, String[] args) {
+      String deployment = "unknown";
+      if (args.length >= 2) {
+         deployment = args[1];
+      }
+      String buildDir = ".";
+      if (args.length >= 3) {
+         buildDir = args[2];
+      }
+      String artifactsDir = buildDir + "/collected-artifacts/" + deployment + "-" + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+      File dir = new File(artifactsDir);
+      if (!dir.exists() && !dir.mkdirs()) {
+         System.out.printf("Failed to create artifacts directory '%s'", dir.getAbsolutePath());
+         return;
+      }
+      for (Pod pod : oc.pods().inNamespace(PROJECT).list().getItems()) {
+         String name = pod.getMetadata().getName();
+         System.out.printf("Writing down logs for pod '%s'%n", name);
+         Reader logReader = oc.pods().inNamespace(PROJECT).withName(name).getLogReader();
+         try {
+            writeTo(logReader, artifactsDir + "/" + name + ".log");
+         } catch (IOException e) {
+            System.out.printf("Failed to write logs for pod '%s'%n", name);
+         }
+      }
+   }
+
+   private static void writeTo(Reader reader, String path) throws IOException {
+      try (FileWriter writer = new FileWriter(path);) {
+         char[] buf = new char[8192];
+         int numRead;
+         while ((numRead = reader.read(buf)) > 0) {
+            writer.write(buf, 0, numRead);
+         }
       }
    }
 
@@ -132,10 +153,33 @@ public class Provisioner {
          .done();
    }
 
-   private static void defineResources(OpenShiftClient oc) {
-      defineDB(oc);
-      defineKeycloak(oc);
-      defineMonitoring(oc);
+   private static void defineResources(OpenShiftClient oc, String[] args) {
+      String deployment = null;
+      String inputPropertiesFile = null;
+      String outputPropertiesFile = null;
+      if (args.length >= 2) {
+         deployment = args[1];
+      }
+      if (args.length >= 3) {
+         inputPropertiesFile = args[2];
+      }
+      if (args.length >= 4) {
+         outputPropertiesFile = args[3];
+      }
+      Properties inputProperties = new Properties();
+
+      if (inputPropertiesFile != null) {
+         try (FileInputStream fis = new FileInputStream(inputPropertiesFile)) {
+            inputProperties.load(fis);
+         } catch (FileNotFoundException e) {
+            throw ProvisionerError.format("Properties file '%s' does not exist.");
+         } catch (IOException e) {
+            throw new ProvisionerError("Cannot load properties", e);
+         }
+      }
+
+      defineDB(oc, inputProperties);
+      defineKeycloak(oc, inputProperties);
       System.out.println("Resources created.");
 
       if (outputPropertiesFile != null) {
@@ -156,9 +200,9 @@ public class Provisioner {
       System.out.println("Properties written.");
    }
 
-   private static void defineDB(OpenShiftClient oc) {
-      String cpuLimit = inputProperties.getProperty("db.docker.cpulimit", "500m");
-      String memLimit = inputProperties.getProperty("db.docker.memlimit", "256M");
+   private static void defineDB(OpenShiftClient oc, Properties inputProperties) {
+      String cpuLimit = inputProperties.getProperty("db.cpulimit", "500m");
+      String memLimit = inputProperties.getProperty("db.memlimit", "256M");
       Resources resources = new Resources(cpuLimit, memLimit);
       oc.deploymentConfigs().inNamespace(PROJECT).createOrReplaceWithNew()
          .withNewMetadata()
@@ -246,9 +290,9 @@ public class Provisioner {
       }
    }
 
-   private static void defineKeycloak(OpenShiftClient oc) {
-      String cpuLimit = inputProperties.getProperty("keycloak.docker.cpulimit", "500m");
-      String memLimit = inputProperties.getProperty("keycloak.docker.memlimit", "1G");
+   private static void defineKeycloak(OpenShiftClient oc, Properties inputProperties) {
+      String cpuLimit = inputProperties.getProperty("keycloak.cpulimit", "500m");
+      String memLimit = inputProperties.getProperty("keycloak.memlimit", "1G");
       Resources resources = new Resources(cpuLimit, memLimit);
       oc.deploymentConfigs().inNamespace(PROJECT).createOrReplaceWithNew()
          .withNewMetadata()
@@ -359,9 +403,6 @@ public class Provisioner {
    }
 
    private static void defineMonitoring(OpenShiftClient oc) {
-      if (!PROVISION_MONITORING) {
-         System.out.println("Monitoring is not provisioned.");
-      }
       oc.deploymentConfigs().inNamespace(PROJECT).createOrReplaceWithNew()
          .withNewMetadata()
             .withName("influxdb")
