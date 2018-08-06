@@ -177,7 +177,7 @@ case "$DEPLOYMENT" in
     crossdc) DOCKER_COMPOSE_FILE=docker-compose-crossdc.yml ;;
     monitoring) DOCKER_COMPOSE_FILE=docker-compose-monitoring.yml ; DELETE_DATA="${DELETE_DATA:-false}" ;;
     *)
-        echo "Deployment '$DEPLOYMENT' not supported by provisioner '$PROVISIONER'."
+        echo "Deployment '$DEPLOYMENT' not supported by provisioner 'docker-compose'."
         exit 1
     ;;
 esac
