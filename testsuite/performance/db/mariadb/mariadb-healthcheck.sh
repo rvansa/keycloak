@@ -9,12 +9,14 @@ fi
 
 host="$(hostname --ip-address || echo '127.0.0.1')"
 user="${MYSQL_USER:-root}"
-export MYSQL_PWD="${MYSQL_PASSWORD:-$MYSQL_ROOT_PASSWORD}"
+# Openshift readinessProbe does not pick MYSQL_PWD from env vars properly so we pass it on cmdline
+password="${MYSQL_PASSWORD:-$MYSQL_ROOT_PASSWORD}"
 
 args=(
 	# force mysql to not use the local "mysqld.sock" (test "external" connectibility)
 	-h"$host"
 	-u"$user"
+	-p"$password"
 	--silent
 )
 

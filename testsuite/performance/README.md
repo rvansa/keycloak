@@ -103,6 +103,39 @@ it is necessary to update the generated Keycloak server configuration (inside `k
 adding a `clean` goal to the provisioning command like so: `mvn clean verify -Pprovision …`. It is *not* necessary to update this configuration 
 when switching between `singlenode` and `cluster` deployments.
 
+#### Provisioning on Openshift
+
+TODO: some of the statements above are untrue.
+
+If you want to run the benchmark in Minishift start it now using `minishift start`.
+Make sure that for provisioning you're using the docker daemon that is running Openshift:
+in case of Minishift you should run `minishift docker-env` and set up the environment variables as suggested.
+You can verify the setup by running `docker ps` - you should see Openshift services there.
+
+Login (`oc login`) as a regular user. This user does not need cluster-admin priviledges but it must be able
+to create a new project and push images to docker registry - see
+[Openshift documentation/Accessing registry](https://docs.openshift.com/container-platform/3.9/install_config/registry/accessing_registry.html#access)
+for details.
+
+Set environment properties:
+* `OPENSHIFT_URL` to the API server URL - with Minishift this can be shown using `minishift console --url`.
+* `OPENSHIFT_ADDRESS` to the external address of Openshift where the routes should be exposed to. Use `minishift ip` if on Minishift.
+* `OPENSHIFT_PROJECT` to the name of the openshift project. By default this is `keycloak-test`
+* `OPENSHIFT_REGISTRY` to the cluster IP of docker registry running as Openshift service. By default this is `172.30.1.1:5000`.
+
+In order to push docker images to the registry in Openshift you need to login:
+
+`docker login $OPENSHIFT_REGISTRY -u $(oc whoami) -p $(oc whoami -t)`
+
+Beware that in order to push to the registry you need to have certificates set up correctly or enable insecure registries
+in `/etc/docker/daemon.json`. If you use Minishift this configuration may be in the Minishift VM, you should not configure your local docker daemon.
+
+Then you can start provisioning using `mvn verify -Pprovision-openshift`: this builds the images and pushes them
+to the `docker-registry` running in Openshift. It also creates all the Openshift resources.
+
+Contrary to Docker-Compose provisioning we don't use modcluster-based load balancer - Openshift handles load balancing internally.
+
+
 ### Collect Artifacts
 
 Usage: `mvn verify -Pcollect`
@@ -166,6 +199,11 @@ If the dump file doesn't exist locally the script will attempt to download it fr
 with `server.version` defaulting to `${project.version}` from `pom.xml`.
 
 **Warning:** Don't override dataset parameters (with `-Dparam=value`) when running export/import because then the contents of dump file might not match the properties file.
+
+#### Export and import on Openshift
+
+While it [is possible](https://docs.openshift.com/container-platform/3.9/dev_guide/expose_service/expose_internal_ip_service.html)
+to get non-HTTP(S) traffic into an Openshift cluster the setup cannot be automated. TODO Use port-forwarding
 
 
 ### Run Tests

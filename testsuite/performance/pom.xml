@@ -35,13 +35,72 @@
         <server.version>${product.version}</server.version>
         <management.user/>
         <management.user.password/>
+        <openshift.project>keycloak-test</openshift.project>
+        <openshift.registry>172.30.1.1:5000</openshift.registry>
     </properties>
             
     <modules>
+        <!-- Openshift provisioner must be built as the first module because it creates the Openshift project;
+             without the project we cannot push the created docker images into docker registry -->
+        <module>openshift-provisioner</module>
         <module>keycloak</module>
         <module>load-balancer/wildfly-modcluster</module>
         <module>infinispan</module>
         <module>tests</module>
     </modules>
-    
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>docker-maven-plugin</artifactId>
+                    <version>0.26.1</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>build</goal>
+                                <goal>push</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <!-- We need to override default output directory as it conflicts with target/docker -->
+                        <outputDirectory>${project.build.directory}/maven-docker</outputDirectory>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.6.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>set-openshift-registry</id>
+            <activation>
+                <property>
+                    <name>env.OPENSHIFT_REGISTRY</name>
+                </property>
+            </activation>
+            <properties>
+                <openshift.registry>${env.OPENSHIFT_REGISTRY}</openshift.registry>
+            </properties>
+        </profile>
+        <profile>
+            <id>set-openshift-project</id>
+            <activation>
+                <property>
+                    <name>env.OPENSHIFT_PROJECT</name>
+                </property>
+            </activation>
+            <properties>
+                <openshift.registry>${env.OPENSHIFT_PROJECT}</openshift.registry>
+            </properties>
+        </profile>
+    </profiles>
 </project>
