@@ -4,10 +4,13 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.VersionInfo;
+import io.fabric8.kubernetes.client.dsl.ExecListener;
+import io.fabric8.kubernetes.client.dsl.ExecWatch;
 import io.fabric8.openshift.api.model.Project;
 import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftConfigBuilder;
+import okhttp3.Response;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,11 +18,22 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class Provisioner {
    private static final String OPENSHIFT_REGISTRY = "OPENSHIFT_REGISTRY";
@@ -40,7 +54,7 @@ public class Provisioner {
 
    public static void main(String[] args) {
       if (args.length < 1) {
-         throw new ProvisionerError("Too few arguments: use one of: 'create-project', 'define-resources', 'define-monitoring', 'collect-artifacts', 'scaledown'");
+         throw new ProvisionerError("Too few arguments: use one of: 'create-project', 'define-resources', 'define-monitoring', 'collect-artifacts', 'scale', 'export-dump', 'import-dump'");
       }
 
       String openshiftUrl = envRequired(OPENSHIFT_URL);
@@ -76,8 +90,14 @@ public class Provisioner {
                case "collect-artifacts":
                   collectArtifacts(oc, args);
                   break;
-               case "scaledown":
-                  scaledown(oc);
+               case "scale":
+                  scale(oc, args);
+                  break;
+               case "export-dump":
+                  exportDump(oc, args);
+                  break;
+               case "import-dump":
+                  importDump(oc, args);
                   break;
                default:
                   throw new ProvisionerError("Unknown command '" + args[0] + "'");
@@ -128,21 +148,31 @@ public class Provisioner {
       }
    }
 
-   private static void scaledown(OpenShiftClient oc) {
-      scale(oc, "keycloak", 0);
-      scale(oc, "mariadb", 0);
-      scale(oc, "influxdb", 0);
-      scale(oc, "cadvisor", 0);
-      scale(oc, "grafana", 0);
-      oc.pods().inNamespace(PROJECT).delete();
-      try {
-         new ReadyPodCounter(oc.pods().inNamespace(PROJECT), 0).await(1, TimeUnit.MINUTES);
-      } catch (InterruptedException e) {
-         throw new ProvisionerError("Scaledown was interrupted");
-      } catch (TimeoutException e) {
-         throw new ProvisionerError("Scaledown timed out.");
+   private static void scale(OpenShiftClient oc, String[] args) {
+      List<String> dcs = Arrays.asList("keycloak", "mariadb", "influxdb", "cadvisor", "grafana");
+      int replicas = 0;
+      if (args.length >= 2) {
+         dcs = Collections.singletonList(args[1]);
       }
-      System.out.println("Scaled down.");
+      if (args.length >= 3) {
+         replicas = Integer.parseInt(args[2]);
+      }
+      for (String dc : dcs) {
+         scale(oc, dc, replicas);
+         if (replicas == 0) {
+            oc.pods().inNamespace(PROJECT).withLabel("name", dc).delete();
+         }
+      }
+      for (String dc : dcs) {
+         try {
+            new ReadyPodCounter(oc.pods().inNamespace(PROJECT).withLabel("name", dc), replicas).await(2, TimeUnit.MINUTES);
+         } catch (InterruptedException e) {
+            throw new ProvisionerError("Scaledown was interrupted");
+         } catch (TimeoutException e) {
+            throw new ProvisionerError("Scaledown timed out.");
+         }
+         System.out.printf("Scaled deploymentconfig %s%n", dc);
+      }
    }
 
    private static void scale(OpenShiftClient oc, String keycloak, int replicas) {
@@ -256,7 +286,7 @@ public class Provisioner {
             .withName("mariadb")
          .endMetadata()
          .withNewSpec()
-            .withType("ClusterIP")
+            .withType("LoadBalancer")
             .withSelector(Collections.singletonMap("name", "mariadb"))
             .addNewPort()
                .withName("mariadb-3306")
@@ -266,19 +296,6 @@ public class Provisioner {
             .endPort()
          .endSpec()
          .done();
-//      oc.routes().inNamespace(PROJECT).createOrReplaceWithNew()
-//         .withNewMetadata()
-//            .withName("mariadb")
-//         .endMetadata()
-//         .withNewSpec()
-//            .withHost("mariadb." + EXT_ADDRESS + ".nip.io")
-//            .withNewPort().withNewTargetPort("mariadb-3306").endPort()
-//            .withNewTo()
-//               .withKind("Service")
-//               .withName("mariadb")
-//            .endTo()
-//         .endSpec()
-//         .done();
 
       System.out.println("Waiting for MariaDB to start");
       try {
@@ -294,13 +311,21 @@ public class Provisioner {
       String cpuLimit = inputProperties.getProperty("keycloak.cpulimit", "500m");
       String memLimit = inputProperties.getProperty("keycloak.memlimit", "1G");
       Resources resources = new Resources(cpuLimit, memLimit);
+      int scale = Integer.parseInt(inputProperties.getProperty("keycloak.scale", "1"));
       oc.deploymentConfigs().inNamespace(PROJECT).createOrReplaceWithNew()
          .withNewMetadata()
             .withName("keycloak")
          .endMetadata()
          .withNewSpec()
-            .withReplicas(Integer.parseInt(inputProperties.getProperty("keycloak.scale", "1")))
+            .withReplicas(scale)
             .withSelector(Collections.singletonMap("name", "keycloak"))
+            .withNewStrategy()
+               .withType("Rolling")
+               .withNewRollingParams()
+                  .withNewMaxSurge("100%")
+                  .withNewMaxUnavailable("100%")
+               .endRollingParams()
+            .endStrategy()
             .withNewTemplate()
                .withNewMetadata()
                   .addToLabels("name", "keycloak")
@@ -309,6 +334,7 @@ public class Provisioner {
                   .addNewContainer()
                      .withName("keycloak")
                      .withImage(REGISTRY + "/" + PROJECT + "/keycloak:latest")
+                     .addNewEnv().withName("CONFIGURATION").withValue(scale > 1 ? "standalone-ha.xml" : "standalone.xml").endEnv()
                      .addNewEnv().withName("MARIADB_HOSTS").withValue("mariadb:3306").endEnv()
                      .addNewEnv().withName("MARIADB_DATABASE").withValue("keycloak").endEnv()
                      .addNewEnv().withName("MARIADB_USER").withValue("keycloak").endEnv()
@@ -643,6 +669,116 @@ public class Provisioner {
          .done();
       System.out.println("Project created.");
    }
+
+   private static void exportDump(OpenShiftClient oc, String[] args) {
+      String sqlFile = getSqlFile(args);
+      Pod pod = oc.pods().inNamespace(PROJECT).withLabel("name", "mariadb").list().getItems()
+         .stream().findFirst().orElseThrow(() -> new ProvisionerError("No database pods are running!"));
+
+      System.out.printf("Dumping database from pod %s to '%s'%n", pod.getMetadata().getName(), sqlFile);
+      try (OutputStream output = new GZIPOutputStream(new FileOutputStream(sqlFile))) {
+         CountDownLatch latch = new CountDownLatch(1);
+         oc.pods().inNamespace(PROJECT).withName(pod.getMetadata().getName())
+            .writingOutput(output)
+            .writingError(System.out)
+            .usingListener(new ExecListener() {
+               @Override
+               public void onOpen(Response response) {
+               }
+
+               @Override
+               public void onFailure(Throwable t, Response response) {
+                  System.out.printf("Failed with response %s%n", response);
+                  latch.countDown();
+               }
+
+               @Override
+               public void onClose(int code, String reason) {
+                  latch.countDown();
+               }
+            })
+            .exec("/usr/bin/mysqldump -u root --password=root keycloak".split(" "));
+         System.out.println("Writing DB dump...");
+         latch.await();
+      } catch (IOException e) {
+         throw ProvisionerError.format(e, "Cannot write to '%s'", sqlFile);
+      } catch (InterruptedException e) {
+         e.printStackTrace();  // TODO: Customise this generated block
+      }
+   }
+
+   private static void importDump(OpenShiftClient oc, String[] args) {
+      String sqlFile = getSqlFile(args);
+      if (!new File(sqlFile).exists()) {
+         throw ProvisionerError.format("File '%s' does not exist.", sqlFile);
+      }
+
+      Pod pod = oc.pods().inNamespace(PROJECT).withLabel("name", "mariadb").list().getItems()
+         .stream().findFirst().orElseThrow(() -> new ProvisionerError("No database pods are running!"));
+
+      System.out.printf("Uploading database from '%s' to pod %s%n", sqlFile, pod.getMetadata().getName());
+      try (InputStream input = new GZIPInputStream(new FileInputStream(sqlFile))) {
+         CountDownLatch latch = new CountDownLatch(1);
+         PipedInputStream in = new PipedInputStream(64 * 1024);
+         ExecWatch exec = oc.pods().inNamespace(PROJECT).withName(pod.getMetadata().getName())
+            // use reasonable buffer size
+            .readingInput(in)
+            .usingListener(new ExecListener() {
+               @Override
+               public void onOpen(Response response) {
+               }
+
+               @Override
+               public void onFailure(Throwable t, Response response) {
+                  System.out.printf("Failed with response %s%n", response);
+                  latch.countDown();
+               }
+
+               @Override
+               public void onClose(int code, String reason) {
+                  latch.countDown();
+               }
+            })
+            .exec("/usr/bin/mysql -u root --password=root keycloak" .split(" "));
+         System.out.println("Uploading DB dump...");
+         // We cannot use .readingInput because GZIPInputStream.available() does not report EOF correctly.
+         try (OutputStream output = new PipedOutputStream(in)) {
+            byte[] buf = new byte[8192];
+            int numRead;
+            int totalRead = 0;
+            int lastReport = 0;
+            while ((numRead = input.read(buf)) > 0) {
+               totalRead += numRead;
+               output.write(buf, 0, numRead);
+               if (totalRead - lastReport > 1024 * 1024) {
+                  System.out.printf("Uploaded %d bytes...", totalRead);
+                  lastReport = totalRead;
+               }
+            }
+         }
+         System.out.println("Finished uploading DB dump...");
+         exec.close();
+         latch.await();
+      } catch (IOException e) {
+         throw ProvisionerError.format(e, "Cannot write to '%s'", sqlFile);
+      } catch (InterruptedException e) {
+         e.printStackTrace();  // TODO: Customise this generated block
+      }
+   }
+
+   private static String getSqlFile(String[] args) {
+      if (args.length < 3) {
+         throw new ProvisionerError("Dataset properties file required.");
+      }
+      // args[1] is deployment, unused now
+      File datasetPropertiesFile = new File(args[2]);
+      if (!datasetPropertiesFile.exists()) {
+         throw ProvisionerError.format("Dataset properties file '%s' does not exist.", datasetPropertiesFile.getAbsolutePath());
+      }
+      String dataset = datasetPropertiesFile.getName();
+      return datasetPropertiesFile.getParent() + "/" + dataset + ".sql.gz";
+   }
+
 
    private static String envOptional(String property, String defaultValue) {
       String value = System.getenv().get(property);

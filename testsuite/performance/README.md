@@ -70,7 +70,7 @@ Additional options are `cluster` and `crossdc` which can be enabled with a profi
 
 #### Usage
 
-Usage: `mvn verify -P provision[,DEPLOYMENT_PROFILE] [-Dprovisioning.properties=NAMED_PROPERTY_SET]`.
+Usage: `mvn verify -P provision-docker[,DEPLOYMENT_PROFILE] [-Dprovisioning.properties=NAMED_PROPERTY_SET]`.
 
 The properties are loaded from `tests/parameters/provisioning/${provisioning.properties}.properties` file.
 Individual parameters can be overriden from command line via `-D` params.
@@ -97,7 +97,7 @@ Available parameters are described in [`README.provisioning-parameters.md`](READ
 
 The `provision-*` operation will produce a `provisioned-system.properties` inside the `tests/target` directory
 with information about the provisioned system such as the type of deployment and URLs of Keycloak servers and load balancers.
-This information is then used by operations `generate-data`, `import-dump`, `test`, `teardown`.
+This information is then used by operations `generate-data`, `import-dump-*`, `test`, `teardown`.
 
 Provisioning operation is idempotent for a specific combination of provisioner+deployment. 
 When running multiple times the system will be simply updated based on the new parameters.
@@ -200,26 +200,37 @@ To delete the generated dataset add `-Ddelete=true` to the above command. Datase
 
 #### Export Database
 
-To export the generated data to a data-dump file enable profile `-P export-dump`. This will create a `${DATASET}.sql.gz` file next to the dataset properties file.
+To export the generated data to a data-dump file enable profile `-P export-dump-docker` or `-P export-dump-openshift`, depending on your provisioner.
+This will create a `${DATASET}.sql.gz` file next to the dataset properties file.
 
-Example: `mvn verify -P generate-data,export-dump -Ddataset=1r_10c_100u`
+Example: `mvn verify -P generate-data,export-dump-docker -Ddataset=1r_10c_100u`
 
 #### Import Database
 
-To import data from an existing data-dump file use profile `-P import-dump`.
+To import data from an existing data-dump file use profile `-P import-dump-docker` or `-P import-dump-openshift`.
 
-Example: `mvn verify -P import-dump -Ddataset=1r_10c_100u`
+Example: `mvn verify -P import-dump-docker -Ddataset=1r_10c_100u`
 
 If the dump file doesn't exist locally the script will attempt to download it from `${db.dump.download.site}` which defaults to `https://downloads.jboss.org/keycloak-qe/${server.version}` 
-with `server.version` defaulting to `${project.version}` from `pom.xml`.
+with `server.version` defaulting to `${project.version}` from `pom.xml` (note: this is supported only in the docker-compose provisioner).
 
 **Warning:** Don't override dataset parameters (with `-Dparam=value`) when running export/import because then the contents of dump file might not match the properties file.
 
 #### Export and import on Openshift
 
-While it [is possible](https://docs.openshift.com/container-platform/3.9/dev_guide/expose_service/expose_internal_ip_service.html)
-to get non-HTTP(S) traffic into an Openshift cluster the setup cannot be automated. TODO Use port-forwarding
+In order to expose the database from Openshift we need to assign it an external IP. Please follow administrative steps in
+[OCP documentation](https://docs.openshift.com/container-platform/3.9/dev_guide/expose_service/expose_internal_ip_load_balancer.html)
+to expose external IPs. The service and route are configured automatically.
 
+After that you need to set routing tables on your machine, in case of Minishift run
+```
+sudo route add -net 172.29.0.0 netmask 255.255.0.0 gw $(minishift ip) dev virbr1
+```
+
+Then set up the `OPENSHIFT_DB` environment variable to point to this DB:
+```
+export OPENSHIFT_DB=$(oc get svc mariadb -o json | jq -r '.spec.externalIPs[0]')
+```
 
 ### Run Tests
 

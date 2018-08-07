@@ -7,8 +7,8 @@ cd $BASEDIR
 
 MVN=${MVN:-mvn}
 PROVISIONING_PARAMETERS=${PROVISIONING_PARAMETERS:-}
-PROVISION_COMMAND="$MVN verify -P provision,import-dump $PROVISIONING_PARAMETERS -Ddataset=$dataset"
-TEARDOWN_COMMAND="$MVN verify -P teardown"
+PROVISION_COMMAND="$MVN verify -P provision-docker,import-dump-docker $PROVISIONING_PARAMETERS -Ddataset=$dataset"
+TEARDOWN_COMMAND="$MVN verify -P teardown-docker"
 
 function runCommand {
     echo "  $1"
