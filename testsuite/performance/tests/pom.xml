@@ -162,7 +162,7 @@
                                 <requireFilesDontExist>
                                     <message><![CDATA[
                                         WARNING: A previously provisioned system still appears to be running.
-         Please tear it down with `mvn verify -P teardown [-Pcluster|crossdc]` before runing `mvn clean`, 
+         Please tear it down with `mvn verify -P teardown-docker [-Pcluster|crossdc]` before runing `mvn clean`,
          or delete the `provisioned-system.properties` file manually.
                                     ]]></message>
                                     <files>
@@ -622,7 +622,7 @@
         </profile>
 
         <profile>
-            <id>export-dump</id>
+            <id>export-dump-docker</id>
             <build>
                 <plugins>
                     <plugin>
@@ -651,7 +651,67 @@
         </profile>
 
         <profile>
-            <id>import-dump</id>
+            <id>export-dump-openshift</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>scale-down-keycloak</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>
+                                        <argument>scale</argument>
+                                        <argument>keycloak</argument>
+                                        <argument>0</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>export-dump</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>
+                                        <argument>export-dump</argument>
+                                        <argument>${deployment}</argument>
+                                        <argument>${dataset.properties.file}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>scale-up-keycloak</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>
+                                        <argument>scale</argument>
+                                        <argument>keycloak</argument>
+                                        <argument>${keycloak.scale}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <mainClass>org.keycloak.performance.openshift.Provisioner</mainClass>
+                            <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>import-dump-docker</id>
             <build>
                 <plugins>
                     <plugin>
@@ -675,6 +735,67 @@
                                 </configuration>
                             </execution>
                         </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>import-dump-openshift</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>scale-down-keycloak</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>
+                                        <argument>scale</argument>
+                                        <argument>keycloak</argument>
+                                        <argument>0</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>import-dump</id>
+                                <!-- Do provisioning after the docker images are built -->
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>
+                                        <argument>import-dump</argument>
+                                        <argument>${deployment}</argument>
+                                        <argument>${dataset.properties.file}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>scale-up-keycloak</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>
+                                        <argument>scale</argument>
+                                        <argument>keycloak</argument>
+                                        <argument>${keycloak.scale}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <mainClass>org.keycloak.performance.openshift.Provisioner</mainClass>
+                            <cleanupDaemonThreads>false</cleanupDaemonThreads>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -791,7 +912,8 @@
                         <configuration>
                             <mainClass>org.keycloak.performance.openshift.Provisioner</mainClass>
                             <arguments>
-                                <argument>scaledown</argument>
+                                <argument>scale</argument>
+                                <!-- default arguments scale all dcs to 0 -->
                             </arguments>
                             <cleanupDaemonThreads>false</cleanupDaemonThreads>
                         </configuration>

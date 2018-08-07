@@ -26,7 +26,7 @@ Additional `PROVISIONING_PARAMETERS` can be set via environment variable.
 | Environment Variable | Description | Default Value |
 | --- | --- | --- | 
 | `algorithm` | Stress test loop algorithm. Available values: `incremental`, `bisection`. | `incremental`  |
-| `provisioning` | When `true` (enabled), the `provision` and `import-dump` operations are run before, and the `teardown` operation is run after test in each iteration. Warm-up is applied in all iterations. When `false` (disabled), there is no provisioning or teardown, and the warm-up is only applied in the first iteration. | `true` (enabled) |
+| `provisioning` | When `true` (enabled), the `provision` and `import-dump-docker` operations are run before, and the `teardown` operation is run after test in each iteration. Warm-up is applied in all iterations. When `false` (disabled), there is no provisioning or teardown, and the warm-up is only applied in the first iteration. | `true` (enabled) |
 | `PROVISIONING_PARAMETERS` | Additional set of parameters passed to the provisioning command. | |
 | `maxIterations` | Maximum number of iterations of the stress test loop. | `10` iterations |
 | `dataset` | Dataset to be used. | `100u2c`  |

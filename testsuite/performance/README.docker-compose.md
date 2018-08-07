@@ -2,12 +2,12 @@
 
 ## Supported Deployments
 
-| Deployment   | Available Operations                                  | Orchestration Template          |
-| ------------ | ----------------------------------------------------- | ------------------------------- |
-| `singlenode` | `provision`, `teardown`, `export-dump`, `import-dump` | `docker-compose.yml`            |
-| `cluster`    | `provision`, `teardown`, `export-dump`, `import-dump` | `docker-compose-cluster.yml`*   |
-| `crossdc`    | `provision`, `teardown`, `export-dump`, `import-dump` | `docker-compose-crossdc.yml`*   |
-| `monitoring` | `provision`, `teardown`                               | `docker-compose-monitoring.yml` |
+| Deployment   | Available Operations                                                              | Orchestration Template          |
+| ------------ | --------------------------------------------------------------------------------- | ------------------------------- |
+| `singlenode` | `provision-docker`, `teardown-docker`, `export-dump-docker`, `import-dump-docker` | `docker-compose.yml`            |
+| `cluster`    | `provision-docker`, `teardown-docker`, `export-dump-docker`, `import-dump-docker` | `docker-compose-cluster.yml`*   |
+| `crossdc`    | `provision-docker`, `teardown-docker`, `export-dump-docker`, `import-dump-docker` | `docker-compose-crossdc.yml`*   |
+| `monitoring` | `provision-docker`, `teardown-docker`                                             | `docker-compose-monitoring.yml` |
 
 The docker-compose orchestration templates are located in `tests/src/main/docker-compose` directory.
 
