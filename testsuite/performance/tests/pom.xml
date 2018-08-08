@@ -949,7 +949,7 @@
                         </configuration>
                         <executions>
                             <execution>
-                                <id>create-project</id>
+                                <id>teardown</id>
                                 <phase>post-integration-test</phase>
                                 <goals>
                                     <goal>java</goal>

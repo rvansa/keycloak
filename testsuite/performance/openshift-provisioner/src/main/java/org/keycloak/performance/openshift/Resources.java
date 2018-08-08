@@ -12,6 +12,9 @@ public class Resources {
    public Resources(String cpu, String memory) {
       this.cpu = cpu;
       this.memory = memory;
+      if (memory.endsWith("m")) {
+         throw new ProvisionerError("Use upper-case 'M' for Megabytes in memlimit!");
+      }
    }
 
    public Map<String, Quantity> toMap() {

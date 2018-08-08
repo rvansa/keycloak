@@ -14,4 +14,8 @@ if [ $KEYCLOAK_ADMIN_USER ] && [ $KEYCLOAK_ADMIN_PASSWORD ]; then
     $JBOSS_HOME/bin/add-user-keycloak.sh --user $KEYCLOAK_ADMIN_USER --password $KEYCLOAK_ADMIN_PASSWORD
 fi
 
+if [ -n "$JGROUPS_DNS_PING_QUERY" ]; then
+     $JBOSS_HOME/bin/jboss-cli.sh --file="/opt/jboss/keycloak/bin/jgroups-openshift.cli"
+fi
+
 exec /opt/jboss/keycloak/bin/standalone.sh $PARAMS

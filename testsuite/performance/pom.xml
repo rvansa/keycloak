@@ -45,7 +45,8 @@
         <module>openshift-provisioner</module>
         <module>keycloak</module>
         <module>load-balancer/wildfly-modcluster</module>
-        <module>infinispan</module>
+        <!-- Disable until fixed -->
+        <!--<module>infinispan</module>-->
         <module>tests</module>
     </modules>
 

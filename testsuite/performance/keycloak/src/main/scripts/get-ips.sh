@@ -22,7 +22,8 @@ else
 fi
 
 if [ -z $PRIVATE_SUBNET ]; then
-    PRIVATE_IP=127.0.0.1
+    # Get first IP available
+    PRIVATE_IP=$(hostname -I | tr ' ' '\n' | head -n 1)
     echo PRIVATE_SUBNET undefined. PRIVATE_IP defaults to $PRIVATE_IP
 else
     export PRIVATE_IP=`getIpForSubnet $PRIVATE_SUBNET`

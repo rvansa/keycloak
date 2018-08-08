@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -149,10 +150,13 @@ public class Provisioner {
    }
 
    private static void scale(OpenShiftClient oc, String[] args) {
-      List<String> dcs = Arrays.asList("keycloak", "mariadb", "influxdb", "cadvisor", "grafana");
+      List<String> dcs;
       int replicas = 0;
       if (args.length >= 2) {
          dcs = Collections.singletonList(args[1]);
+      } else {
+         dcs = oc.deploymentConfigs().inNamespace(PROJECT).list().getItems().stream()
+            .map(dc -> dc.getMetadata().getName()).collect(Collectors.toList());
       }
       if (args.length >= 3) {
          replicas = Integer.parseInt(args[2]);
@@ -350,6 +354,7 @@ public class Provisioner {
                      .addNewEnv().withName("DS_MAX_POOL_SIZE").withValue(inputProperties.getProperty("keycloak.ds.max-pool-size", "100")).endEnv()
                      .addNewEnv().withName("DS_POOL_PREFILL").withValue(inputProperties.getProperty("keycloak.ds.pool-prefill", "true")).endEnv()
                      .addNewEnv().withName("DS_PS_CACHE_SIZE").withValue(inputProperties.getProperty("keycloak.ds.ps-cache-size", "100")).endEnv()
+                     .addNewEnv().withName("JGROUPS_DNS_PING_QUERY").withValue("keycloak-discovery." + PROJECT + ".svc.cluster.local").endEnv()
                      .addNewPort().withProtocol("TCP").withContainerPort(8080).endPort()
                      .addNewPort().withProtocol("TCP").withContainerPort(9990).endPort()
                      .withNewReadinessProbe()
@@ -391,6 +396,21 @@ public class Provisioner {
             .endPort()
          .endSpec()
          .done();
+      oc.services().inNamespace(PROJECT).createOrReplaceWithNew()
+         .withNewMetadata()
+            .withName("keycloak-discovery")
+         .endMetadata()
+         .withNewSpec()
+            .withType("ClusterIP")
+            .withClusterIP("None")
+            .withSelector(Collections.singletonMap("name", "keycloak"))
+            .addNewPort()
+               .withName("discovery")
+               .withPort(1)
+            .endPort()
+            .withPublishNotReadyAddresses(true)
+         .endSpec()
+         .done();
       oc.routes().inNamespace(PROJECT).createOrReplaceWithNew()
          .withNewMetadata()
             .withName("keycloak")
@@ -420,7 +440,7 @@ public class Provisioner {
 
       System.out.println("Waiting for Keycloak to start");
       try {
-         new ReadyPodCounter(oc.pods().inNamespace(PROJECT).withLabel("name", "keycloak"), 1).await(2, TimeUnit.MINUTES);
+         new ReadyPodCounter(oc.pods().inNamespace(PROJECT).withLabel("name", "keycloak"), 1).await(1, TimeUnit.DAYS);
       } catch (InterruptedException e) {
          throw new ProvisionerError("Interrupted waiting for Keycloak to start up.");
       } catch (TimeoutException e) {

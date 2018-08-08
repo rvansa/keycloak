@@ -82,9 +82,7 @@
             </fileset>
         </copy>
         <copy todir="${project.build.directory}/docker/keycloak" overwrite="false">
-            <fileset dir="${server.unpacked.home}">
-                <exclude name="bin/*.cli"/>
-            </fileset>
+            <fileset dir="${server.unpacked.home}" />
         </copy>
     </target>
 
