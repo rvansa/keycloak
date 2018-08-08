@@ -2,6 +2,7 @@
 <!--  See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
 <config default-supplement="default">
     <extension-module>org.jboss.as.clustering.jgroups</extension-module>
+    <extension-module>org.jgroups.kubernetes</extension-module>
     <subsystem xmlns="urn:jboss:domain:jgroups:5.0">
         <channels default="ee">
             <channel name="ee" stack="udp" cluster="ejb"/>
@@ -103,7 +104,7 @@
         </replacement>
     </supplement>
     <supplement name="kube-discovery">
-        <replacement placeholder="TCP_DISCOVERY">
+        <replacement placeholder="TCP-DISCOVERY">
             <protocol type="kubernetes.KUBE_PING" />
         </replacement>
     </supplement>
