@@ -418,7 +418,6 @@ case "$OPERATION" in
 
     collect)
         TIMESTAMP=`date +%s`
-        ARTIFACTS_DIR="${PROJECT_BUILD_DIRECTORY}/collected-artifacts/${DEPLOYMENT}-${TIMESTAMP}"
         SERVICES=`docker-compose -f $DOCKER_COMPOSE_FILE -p ${PROJECT_NAME} config --services`
         echo "Collecting docker container logs."
         rm -rf ${ARTIFACTS_DIR}; mkdir -p ${ARTIFACTS_DIR}

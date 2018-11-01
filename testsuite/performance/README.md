@@ -144,7 +144,12 @@ You can verify the setup by running `docker ps` - you should see Openshift servi
 Login (`oc login`) as a regular user. This user does not need cluster-admin priviledges but it must be able
 to create a new project and push images to docker registry - see
 [Openshift documentation/Accessing registry](https://docs.openshift.com/container-platform/3.9/install_config/registry/accessing_registry.html#access)
-for details. Provisioning monitoring (TODO) may need elevated privileges, though.
+for details. In order to see monitoring stats (CPU & memory usage...) the user needs to have the `cluster-monitoring-view` RBAC;
+as admin you can add this using:
+
+```
+oc adm policy add-cluster-role-to-user cluster-monitoring-view
+```
 
 Set these environment properties:
 * `OPENSHIFT_URL` to the API server URL - with Minishift this can be shown using `minishift console --url`.
@@ -354,7 +359,11 @@ By default the monitoring history is preserved. If you wish to delete it enable 
 
 To view monitoring dashboard open Grafana UI at: `http://localhost:3000/dashboard/file/resource-usage-combined.json`.
 
-Monitoring on OpenShift is TODO.
+### OpenShift Monitoring
+
+OpenShift 3.11 automatically collects container and node statistics (CPU utilization, memory utilization, I/O...) in built-in Prometheus instance.
+Therefore, no custom setup is required to collect those statistics. In order to analyze the data offline selected metrics are be downloaded
+in the `collect-openshift` profile. You can adjust what is collected setting `openshift.monitoring.config` property.
 
 ### Sysstat metrics
 
